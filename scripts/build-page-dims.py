@@ -12,6 +12,7 @@
 使い方:
   python3 scripts/build-page-dims.py                                  # 全件 (中断しても再開できる)
   python3 scripts/build-page-dims.py --only P-III-a-0625,P-III-a-1912 # 数件だけ試す (書き出さない)
+  python3 scripts/build-page-dims.py --update P-V-A-a-42,P-V-A-a-65    # 数件だけ調べ直し、今の一覧に上書きする
 
 入力: data/bib_callnumbers.txt (1 行 1 請求記号)
 途中経過: data/page-dims.progress.jsonl (再開用。コミットしない)
@@ -113,6 +114,7 @@ def write_output(results: dict):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", help="カンマ区切りの請求記号。結果を表示するだけで書き出さない")
+    ap.add_argument("--update", help="カンマ区切りの請求記号。調べ直して、今の一覧のその資料だけを置き換える")
     ap.add_argument("--workers", type=int, default=12, help="同時に調べる資料の数")
     # data/ はコミットしない (.gitignore)。worktree で流すときは本体のものを指す
     ap.add_argument("--list", default=LIST, help="請求記号の一覧 (既定: data/bib_callnumbers.txt)")
@@ -122,6 +124,20 @@ def main():
         for cn in args.only.split(","):
             runs = scan(cn.strip())
             print(cn, sum(r[1] for r in runs), "ページ", runs)
+        return
+
+    if args.update:
+        # 差し替えた数件のために全 8,000 件を流し直さずに済むようにする (2026-09-16 pCloud 差し替え)
+        results = {cn: runs for cn, runs in json.load(open(OUT))["items"].items()}
+        for cn in [c.strip() for c in args.update.split(",") if c.strip()]:
+            runs = scan(cn)
+            before = sum(r[1] for r in results.get(cn, []))
+            print(f"  {cn}: {before} → {sum(r[1] for r in runs)} ページ")
+            if runs:
+                results[cn] = runs
+            else:
+                results.pop(cn, None)
+        write_output(results)
         return
 
     call_numbers = [l.strip() for l in open(args.list) if l.strip()]
