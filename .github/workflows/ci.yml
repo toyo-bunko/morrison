@@ -19,6 +19,10 @@ jobs:
       - run: npm ci
       - name: Audit (high 以上で失敗。除外は scripts/audit.mjs に理由と期限つきで書く)
         run: node scripts/audit.mjs
+        # Dependabot の PR では失敗させない。一部の脆弱性だけを直す更新でも、
+        # 残りの脆弱性で落ちて取り込めなくなるため。取り込むかどうかは
+        # dependabot-security-merge.yml が更新前後の件数で判定する。
+        continue-on-error: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
       - run: npm run lint
       - run: npm test
       - run: npm run build
