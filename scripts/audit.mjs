@@ -15,7 +15,7 @@ import { execFileSync } from 'node:child_process'
 // --- 除外 (ALLOW) -----------------------------------------------------------
 //
 // 2026-09-08 の導入時点で存在していた 25 件は、2026-09-11 に lockfile を
-// 更新して解消した (npm audit で 0 件)。除外は空に戻してある。
+// 更新して解消した (npm audit で 0 件)。2026-09-30 に下の 2 件を期限つきで除外した。
 //
 // 直せない 1 件で CI が止まり続けると、そのうち監査ごと外されてしまう。
 // どうしても直せないものが出たときだけ、下の ALLOW に「理由」と「期限」を
@@ -23,7 +23,14 @@ import { execFileSync } from 'node:child_process'
 // 「なぜ放置しているのか」と「いつ見直すのか」が常にこのファイルに残る。
 
 /** @type {{ id: string, package: string, until: string, reason: string }[]} */
-const ALLOW = []
+const ALLOW = [
+  // wrangler の手元確認用シミュレータ (miniflare) が undici を 7.29.0 に固定している。
+  // 本番の Worker には入らない (開発時だけ使う)。直すには wrangler の新版が要るが、
+  // 2026-09-30 時点の新版は公開当日で、新しすぎる版は取り込まない方針なので待つ。
+  // 期限までに Dependabot の wrangler 更新で解消しているはず。
+  { id: 'GHSA-rfgv-xxqx-mfg5', package: 'undici (miniflare)', until: '2026-10-31', reason: 'dev-only / wrangler pins exact version' },
+  { id: 'GHSA-w293-vg96-wgc3', package: 'undici (miniflare)', until: '2026-10-31', reason: 'dev-only / wrangler pins exact version' },
+]
 
 function audit() {
   try {
