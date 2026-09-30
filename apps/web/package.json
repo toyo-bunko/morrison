@@ -55,7 +55,7 @@
     "tsx": "^4.19.0",
     "typescript": "5.8.3",
     "vitest": "4.1.11",
-    "wrangler": "^4.86.0"
+    "wrangler": "^4.145.0"
   },
   "optionalDependencies": {
     "@cloudflare/workerd-darwin-arm64": "^1.20260426.1"
