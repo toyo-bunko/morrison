@@ -6,7 +6,7 @@ export const pages: Record<string, string> = {
 
 export const news: { slug: string; raw: string }[] = [
   {
-    "slug": "2026-02-20_release",
-    "raw": "---\ndate: \"2026-02-20\"\ntitle: モリソンパンフレット統合データベースを公開しました。\ntitle_en: Morrison Pamphlets Integrated Database has been released.\n---\n\nモリソンパンフレット統合データベースを公開しました。\n\nThe Morrison Pamphlets Integrated Database has been released.\n"
+    "slug": "2026-10-01_release",
+    "raw": "---\ndate: \"2026-10-01\"\ntitle: モリソンパンフレット統合データベースを公開しました。\ntitle_en: Morrison Pamphlets Integrated Database has been released.\n---\n\nモリソンパンフレット統合データベースを公開しました。\n\nThe Morrison Pamphlets Integrated Database has been released.\n"
   }
 ]
