@@ -14,6 +14,14 @@ export default async function FeatureCards() {
   const t = await getTranslations('HomePage')
 
   const features = [
+    // 岡本隆司先生の紹介文（/about）を先頭に置く。東洋文庫からの依頼（2026-09-30）。
+    {
+      href: '/about',
+      Icon: HiInformationCircle,
+      title: t('featureAboutTitle'),
+      description: t('featureAboutDescription'),
+      cta: t('featureAboutCta'),
+    },
     {
       href: '/search',
       Icon: HiSearch,
@@ -41,13 +49,6 @@ export default async function FeatureCards() {
       title: t('featureApiTitle'),
       description: t('featureApiDescription'),
       cta: t('featureApiCta'),
-    },
-    {
-      href: '/about',
-      Icon: HiInformationCircle,
-      title: t('featureAboutTitle'),
-      description: t('featureAboutDescription'),
-      cta: t('featureAboutCta'),
     },
   ]
 
