@@ -48,7 +48,7 @@
     "@types/node": "22.15.3",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.4.2",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.0.1",
     "swagger-ui-dist": "5.32.6",
