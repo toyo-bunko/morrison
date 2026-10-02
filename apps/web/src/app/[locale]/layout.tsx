@@ -43,6 +43,17 @@ import ThemeProvider from '@/theme/theme-provider'
 import { Suspense } from 'react'
 import { getDefaultMetadata } from '@/libs/metadata'
 import type { Metadata, Viewport } from 'next'
+import { notFound } from 'next/navigation'
+import { locales } from '@/i18n/config'
+
+/**
+ * 対応言語か。言語の位置に別の語が来たとき（`/robots.txt` など）、それを言語として
+ * 扱ってトップページを 200 で返していた（2026-10-02、`<html lang="robots.txt">`）。
+ * 検索エンジンは robots.txt を読めず、存在しない URL も「ある」と見なす。
+ */
+function isLocale(v: string): boolean {
+  return (locales as readonly string[]).includes(v)
+}
 
 export async function generateMetadata({
   params,
@@ -50,6 +61,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await params
+  if (!isLocale(locale)) return {}
   return await getDefaultMetadata(locale)
 }
 
@@ -69,6 +81,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const { locale } = await params
+  if (!isLocale(locale)) notFound()
   const messages = await getMessages()
 
   return (

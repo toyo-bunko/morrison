@@ -19,6 +19,7 @@ import YearHistogram from '@/components/pages/visualize/YearHistogram'
 import { formatCount } from '@/libs/format'
 import { authorHref } from '@/libs/search-link'
 import { fetchStats } from '@/libs/stats-data'
+import { pageMetadata } from '@/libs/metadata'
 
 /**
  * 毎回その場で数える。
@@ -38,7 +39,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'VisualizePage' })
-  return { title: t('title'), description: t('lead') }
+  return pageMetadata(locale, { path: '/visualize', title: t('title'), description: t('lead') })
 }
 
 export default async function VisualizePage({

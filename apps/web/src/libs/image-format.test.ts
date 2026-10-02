@@ -23,6 +23,8 @@ const SRC = join(process.cwd(), 'src')
 const ALLOWED = [
   'src/app/api/iiif/[version]/[id]/manifest/route.ts',
   'src/libs/dts.ts',
+  // SNS の共有カード。WebP を読まない SNS があるので JPEG に固定している
+  'src/libs/item-seo.ts',
 ]
 
 function walk(dir: string, out: string[] = []): string[] {
