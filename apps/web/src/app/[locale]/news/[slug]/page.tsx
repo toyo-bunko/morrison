@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import ReactMarkdown from 'react-markdown'
 import { HiCalendar } from 'react-icons/hi'
+import type { Metadata } from 'next'
+import { pageMetadata } from '@/libs/metadata'
 
 // locale も含めて組み合わせを返す。slug だけを返していたときは locale が
 // 動的なままで、静的生成の指定と食い違い、本番で 500 になっていた。
@@ -13,6 +15,22 @@ export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
     items.map((item) => ({ locale, slug: item.slug })),
   )
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>
+}): Promise<Metadata> {
+  const { locale, slug } = await params
+  const item = getNewsItem(slug, locale)
+  if (!item) return {}
+  return pageMetadata(locale, {
+    path: `/news/${slug}`,
+    title: item.title,
+    description: item.body.replace(/[#*_>\[\]()`]/g, ''),
+    type: 'article',
+  })
 }
 
 export default async function NewsDetailPage({

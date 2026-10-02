@@ -7,9 +7,18 @@ import { getTranslations } from 'next-intl/server'
 import { getConfig } from '@/libs/getConfig'
 import { getNewsItems } from '@/libs/content'
 import { HiNewspaper, HiArrowNarrowRight } from 'react-icons/hi'
+import type { Metadata } from 'next'
+import { origin, pageMetadata } from '@/libs/metadata'
+import { localizedUrl } from '@/libs/canonical-url'
+import { jsonLdString } from '@/libs/item-seo'
 
 /** How many entries the home page shows before linking to the full list. */
 const NEWS_PREVIEW_COUNT = 3
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  return pageMetadata(locale, { path: '/' })
+}
 
 export default async function Home({
   params,
@@ -22,8 +31,20 @@ export default async function Home({
   const config = await getConfig(locale)
   const news = getNewsItems(locale).slice(0, NEWS_PREVIEW_COUNT)
 
+  // 検索エンジンに「このサイトの名前と運営者」を伝える構造化データ。
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: config.siteName,
+    url: localizedUrl(origin, locale, '/'),
+    description: config.siteDescription,
+    inLanguage: locale,
+    publisher: { '@type': 'ArchiveOrganization', name: '東洋文庫 / Toyo Bunko', url: 'https://www.toyo-bunko.or.jp/' },
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
       <Header />
 
       {/* flex-1 keeps the footer on the bottom edge when the page is shorter

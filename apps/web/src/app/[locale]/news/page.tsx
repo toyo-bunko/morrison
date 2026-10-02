@@ -2,6 +2,14 @@ import Common from '@/components/layout/Common'
 import NewsList from '@/components/pages/news/NewsList'
 import { getNewsItems } from '@/libs/content'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
+import { pageMetadata } from '@/libs/metadata'
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'NewsPage' })
+  return pageMetadata(locale, { path: '/news', title: t('title') })
+}
 
 export default async function NewsPage({
   params,

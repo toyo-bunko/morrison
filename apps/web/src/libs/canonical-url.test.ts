@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { itemUrl, localeSegment } from './canonical-url'
+import { itemUrl, localeSegment, localizedUrl } from './canonical-url'
 
 const SITE = 'https://morrison.toyobunko-lab.jp'
 
@@ -37,5 +37,19 @@ describe('itemUrl', () => {
 
   it('ゼロ詰めしない請求記号でもそのまま使う', () => {
     expect(itemUrl(SITE, 'ja', 'P-V-A-a-42')).toBe(`${SITE}/item/P-V-A-a-42`)
+  })
+})
+
+describe('localizedUrl', () => {
+  it('トップの日本語版は末尾にスラッシュを付けない', () => {
+    expect(localizedUrl(SITE, 'ja', '/')).toBe(SITE)
+  })
+
+  it('トップの英語版は /en', () => {
+    expect(localizedUrl(SITE, 'en', '/')).toBe(`${SITE}/en`)
+  })
+
+  it('スラッシュの無い path も受ける', () => {
+    expect(localizedUrl(SITE, 'en', 'about')).toBe(`${SITE}/en/about`)
   })
 })

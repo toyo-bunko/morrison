@@ -4,6 +4,9 @@ import { setRequestLocale } from 'next-intl/server'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import SearchContent from '@/components/pages/search/SearchContent'
+import type { Metadata } from 'next'
+import { pageMetadata } from '@/libs/metadata'
+import { getTranslations } from 'next-intl/server'
 
 // SSG support
 export function generateStaticParams() {
@@ -27,6 +30,13 @@ function SearchLoading() {
       </div>
     </div>
   )
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'SearchPage' })
+  const home = await getTranslations({ locale, namespace: 'HomePage' })
+  return pageMetadata(locale, { path: '/search', title: t('title'), description: home('featureSearchDescription') })
 }
 
 export default async function SearchPage({ params }: { params: Promise<{ locale: string }> }) {

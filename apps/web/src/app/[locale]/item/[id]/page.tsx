@@ -1,14 +1,15 @@
 import Common from '@/components/layout/Common'
-import { config } from '@/config'
 import { getConfig } from '@/libs/getConfig'
 import { Metadata } from 'next'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { cache, type ReactNode } from 'react'
-import { getDefaultMetadata } from '@/libs/metadata'
+import { origin, pageMetadata } from '@/libs/metadata'
+import { itemDescription, itemJsonLd, itemOgImageUrl, jsonLdString } from '@/libs/item-seo'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { createHeaders } from '@/libs/api'
 import { esSearch } from '@toyo/shared-lib'
 import { Link } from '@/i18n/routing'
-import { itemUrl } from '@/libs/canonical-url'
+import { itemUrl, localeSegment } from '@/libs/canonical-url'
 import type { MorrisonItem } from '@/types/morrison'
 import ItemViewer from '@/components/pages/item/ItemViewer'
 import type { OcrPage } from '@/components/pages/item/BookViewer'
@@ -28,8 +29,13 @@ const getData = cache(async (id: string): Promise<{ item: MorrisonItem | null; r
       headers: createHeaders(),
     })
 
-    if (!response.ok) {
+    // 404 は「その資料は無い」。それ以外の失敗（検索サーバの停止など）は
+    // 投げて 500 にする。404 で返すと、検索エンジンが資料ページを索引から外してしまう。
+    if (response.status === 404) {
       return { item: null, raw: null }
+    }
+    if (!response.ok) {
+      throw new Error(`Failed to fetch item ${id}: HTTP ${response.status}`)
     }
 
     const data = await response.json()
@@ -46,7 +52,7 @@ const getData = cache(async (id: string): Promise<{ item: MorrisonItem | null; r
     }
   } catch (error) {
     console.error('Failed to fetch item:', error)
-    return { item: null, raw: null }
+    throw error
   }
 })
 
@@ -87,6 +93,37 @@ const getOcrPages = cache(async (omekaId: string | number): Promise<OcrPage[]> =
   }
 })
 
+/**
+ * 旧 Omeka 版の数字の ID（`/item/99564`）から、いまの資料 ID（請求記号）を引く。
+ *
+ * 旧サイトの資料 URL は Cloudflare の転送規則で `/item/<元の続き>` へ送っている
+ * （docs/cloudflare-redirect-setup.md）。請求記号の URL はそのまま当たるが、
+ * 数字の ID の URL は「資料が見つかりません」になっていた（2026-10-02）。
+ */
+const findByOmekaId = cache(async (omekaId: string): Promise<string | null> => {
+  ensureEnv()
+  try {
+    const data = await esSearch(BIB_INDEX, {
+      size: 1,
+      _source: false,
+      query: { term: { omeka_id: Number(omekaId) } },
+    })
+    return data.hits?.hits?.[0]?._id ?? null
+  } catch (error) {
+    console.error('Failed to look up omeka_id:', error)
+    return null
+  }
+})
+
+/** 資料が無ければ、旧サイトの数字 ID として引き直して転送する。それも無ければ 404。 */
+async function redirectOrNotFound(locale: string, id: string): Promise<never> {
+  if (/^\d+$/.test(id)) {
+    const current = await findByOmekaId(id)
+    if (current) permanentRedirect(`${localeSegment(locale)}/item/${encodeURIComponent(current)}`)
+  }
+  notFound()
+}
+
 const getIndexLastUpdated = cache(async (): Promise<number | null> => {
   ensureEnv()
   const host = process.env.ES_URL || ''
@@ -114,28 +151,17 @@ export const generateMetadata = async ({
 }): Promise<Metadata> => {
   const { locale, id } = await params
   const { item } = await getData(id)
+  if (!item) return redirectOrNotFound(locale, id)
 
-  if (!item) {
-    return {
-      title: 'Not Found',
-    }
-  }
-
-  const baseMetadata = await getDefaultMetadata(locale)
   const title = item.title || id
-
-  return {
-    ...baseMetadata,
-    title: `${title} | ${config.siteName}`,
-    openGraph: {
-      ...baseMetadata.openGraph,
-      title: `${title} | ${config.siteName}`,
-    },
-    twitter: {
-      ...baseMetadata.twitter,
-      title: `${title} | ${config.siteName}`,
-    },
-  }
+  return pageMetadata(locale, {
+    path: `/item/${id}`,
+    // 資料名は長いものが多い（200 字を超えるものもある）。タブと検索結果で切れるので詰める。
+    title: title.length > 80 ? `${title.slice(0, 79).trimEnd()}…` : title,
+    description: itemDescription(item, locale),
+    image: item.has_image ? { url: itemOgImageUrl(item.callNumber || id), alt: title } : undefined,
+    type: 'article',
+  })
 }
 
 /**
@@ -189,15 +215,8 @@ export default async function ItemPage({
     getConfig(locale),
   ])
 
-  if (!item) {
-    return (
-      <Common title="Not Found">
-        <div className="text-center py-20">
-          <p className="text-gray-600 dark:text-gray-400">{t('noData')}</p>
-        </div>
-      </Common>
-    )
-  }
+  // 「見つかりません」を 200 で返すと、検索エンジンは存在するページとして扱う。
+  if (!item) return redirectOrNotFound(locale, id)
 
   const title = item.title || id
 
@@ -251,8 +270,17 @@ export default async function ItemPage({
   ].filter(Boolean)
   const citation = citationParts.join('. ') + '.'
 
+  const jsonLd = itemJsonLd(item, {
+    url: pageUrl,
+    siteName: localeConfig.siteName,
+    siteUrl: origin,
+    description: itemDescription(item, locale),
+    image: hasImages ? itemOgImageUrl(item.callNumber || id) : undefined,
+  })
+
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
       <Common isFullWidth title={title} hideHeading>
         {/* IIIF Viewer (OpenSeadragon) — opens at the matched page and
             highlights the search term in-image when arriving from full-text search. */}

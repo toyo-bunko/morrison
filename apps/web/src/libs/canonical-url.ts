@@ -14,9 +14,19 @@ export function localeSegment(locale: string): string {
 }
 
 /**
+ * 任意のページの正規 URL。`path` は言語の接頭辞を含まない形（`/about`、トップは `/`）。
+ * トップの日本語版は末尾のスラッシュを付けない（`https://…jp`）。英語版は `…/en`。
+ */
+export function localizedUrl(siteUrl: string, locale: string, path: string): string {
+  const base = `${siteUrl.replace(/\/+$/, '')}${localeSegment(locale)}`
+  const p = path === '/' || path === '' ? '' : path.startsWith('/') ? path : `/${path}`
+  return `${base}${p}`
+}
+
+/**
  * 資料詳細ページの正規 URL。
  * @param siteUrl 末尾のスラッシュは付けない（例 `https://morrison.toyobunko-lab.jp`）
  */
 export function itemUrl(siteUrl: string, locale: string, id: string): string {
-  return `${siteUrl.replace(/\/+$/, '')}${localeSegment(locale)}/item/${id}`
+  return localizedUrl(siteUrl, locale, `/item/${id}`)
 }
