@@ -1,6 +1,6 @@
 {
   "name": "morrison",
-  "main": ".open-next/worker.js",
+  "main": "worker.ts",
   "compatibility_date": "2026-04-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
@@ -21,6 +21,10 @@
     "ALLOWED_INDICES": "morrison_bib",
     "NEXT_PUBLIC_INDEX_NAME": "morrison_bib",
     "FULLTEXT_INDEX_NAME": "morrison_page"
+  },
+  // 版の ID。worker.ts がキャッシュのキーに入れ、デプロイのたびに入れ替わるようにする
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
   },
   "observability": {
     "enabled": true

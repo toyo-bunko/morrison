@@ -2,9 +2,10 @@
 
 import { MiradorViewer } from '@toyo/shared-ui'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { useLocale } from 'next-intl'
 
-export default function MiradorPage() {
+function MiradorFromQuery() {
   const searchParams = useSearchParams()
   const locale = useLocale()
 
@@ -27,5 +28,17 @@ export default function MiradorPage() {
       searchQuery={searchQuery}
       locale={locale}
     />
+  )
+}
+
+/**
+ * 表示する資料は URL のクエリで決まるので、クエリはブラウザで読む。
+ * Suspense で包まないと、言語ごとの静的書き出し（SSG）が通らない。
+ */
+export default function MiradorPage() {
+  return (
+    <Suspense>
+      <MiradorFromQuery />
+    </Suspense>
   )
 }
