@@ -43,7 +43,7 @@
     "tailwindcss": "^4.1.4"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "1.19.9",
+    "@opennextjs/cloudflare": "1.20.7",
     "@playwright/test": "1.63.0",
     "@types/node": "22.15.3",
     "@types/react": "19.1.2",
