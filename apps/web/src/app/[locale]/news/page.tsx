@@ -1,7 +1,7 @@
 import Common from '@/components/layout/Common'
 import NewsList from '@/components/pages/news/NewsList'
 import { getNewsItems } from '@/libs/content'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { pageMetadata } from '@/libs/metadata'
 
@@ -17,6 +17,7 @@ export default async function NewsPage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations('NewsPage')
   const items = getNewsItems(locale)
 

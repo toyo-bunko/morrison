@@ -2,7 +2,7 @@ import BackToTopButtonClient from '@/components/layout/BackToTopButtonClient'
 import { GoogleAnalytics } from '@toyo/shared-ui'
 import { BIZ_UDPGothic, BIZ_UDPMincho, EB_Garamond } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages } from 'next-intl/server'
+import { getMessages, setRequestLocale } from 'next-intl/server'
 import './globals.css'
 
 const GA_TAG_ID = process.env.NEXT_PUBLIC_GA_ID || ''
@@ -55,6 +55,15 @@ function isLocale(v: string): boolean {
   return (locales as readonly string[]).includes(v)
 }
 
+/**
+ * 言語ごとにビルド時に作る（SSG）。これと各ページの setRequestLocale が無いと、
+ * next-intl は言語をアクセスから読むしかなく、全ページが毎回の描画になる。
+ * 2026-10-02、1 ページ 30〜50ms の描画が Workers 無料枠の 10ms を超え、本番が 503 になった。
+ */
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }))
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -82,6 +91,7 @@ export default async function RootLayout({
 }) {
   const { locale } = await params
   if (!isLocale(locale)) notFound()
+  setRequestLocale(locale)
   const messages = await getMessages()
 
   return (

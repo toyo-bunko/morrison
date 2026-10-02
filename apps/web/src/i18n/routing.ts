@@ -15,6 +15,10 @@ export const routing = defineRouting({
   // unprefixed URLs to /en — and link prefetches of /en/... pages rewrote
   // that cookie right after switching to Japanese, bouncing users back.
   localeDetection: false,
+
+  // 言語は URL だけで決まるので、言語の Cookie は使わない。付けたままだと
+  // 全ページの応答に Set-Cookie が載り、Cloudflare のキャッシュに置けない (worker.ts)。
+  localeCookie: false,
 })
 
 // Lightweight wrappers around Next.js' navigation APIs

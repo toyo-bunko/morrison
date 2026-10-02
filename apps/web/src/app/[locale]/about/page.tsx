@@ -1,6 +1,6 @@
 import Common from '@/components/layout/Common'
 import { getContent } from '@/libs/content'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import ReactMarkdown from 'react-markdown'
 import type { Metadata } from 'next'
 import { pageMetadata } from '@/libs/metadata'
@@ -26,6 +26,7 @@ export default async function AboutPage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations('AboutPage')
   const content = getContent('about', locale)
 

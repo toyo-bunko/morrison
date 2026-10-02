@@ -3,7 +3,7 @@ import Footer from '@/components/layout/Footer'
 import FeatureCards from '@/components/pages/home/FeatureCards'
 import NewsList from '@/components/pages/news/NewsList'
 import { Link } from '@/i18n/routing'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { getConfig } from '@/libs/getConfig'
 import { getNewsItems } from '@/libs/content'
 import { HiNewspaper, HiArrowNarrowRight } from 'react-icons/hi'
@@ -26,6 +26,7 @@ export default async function Home({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations('HomePage')
   const tNews = await getTranslations('NewsPage')
   const config = await getConfig(locale)
