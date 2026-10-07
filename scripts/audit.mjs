@@ -30,6 +30,15 @@ const ALLOW = [
   // 期限までに Dependabot の wrangler 更新で解消しているはず。
   { id: 'GHSA-rfgv-xxqx-mfg5', package: 'undici (miniflare)', until: '2026-10-31', reason: 'dev-only / wrangler pins exact version' },
   { id: 'GHSA-w293-vg96-wgc3', package: 'undici (miniflare)', until: '2026-10-31', reason: 'dev-only / wrangler pins exact version' },
+  // braces は 2026-10-07 時点で上流に修正版が無い (最新の 3.0.3 でも直らない)。
+  // eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch → braces の
+  // 経路で、lint のときの glob 展開にだけ使う。実行時に外からの入力を処理しない。
+  // toyo-bunko/kanseki でも同じ理由で保留している。
+  // sharp も同じく miniflare が 0.35.4 に固定している (2026-10-07)。next も sharp を持つが、
+  // 使うのは自前サーバでの画像縮小だけで、Cloudflare の Worker には入らない。
+  // overrides で 0.35.5 を指定しても npm が miniflare の固定を外さないため、wrangler の更新を待つ。
+  { id: 'GHSA-wq5f-xc86-pv6w', package: 'sharp (miniflare)', until: '2026-10-31', reason: 'dev-only / wrangler pins exact version' },
+  { id: 'GHSA-vfj7-8cjw-p6xm', package: 'braces', until: '2026-11-15', reason: 'lint only (eslint-config-next) / no upstream fix' },
 ]
 
 function audit() {
