@@ -30,6 +30,23 @@ interface Env {
 /** キャッシュに置いておく時間（秒）。資料の内容はほとんど変わらない。 */
 const EDGE_TTL = 60 * 60 * 24
 
+/**
+ * ブラウザに渡す cache-control。キャッシュから取り出した応答には、置いたときの
+ * s-maxage しか書いていないため、Cloudflare がゾーンのブラウザ用既定 (4 時間) の
+ * max-age を足していた。そのままだと配り直した後も、一度開いた人には最大 4 時間
+ * 古いページが出る。ブラウザには毎回確かめさせ、返すのはこのキャッシュにする
+ * (Next.js は起動しないので重くならない)。
+ */
+export const BROWSER_CACHE_CONTROL = 'public, max-age=0, must-revalidate'
+
+/** ブラウザに返す形に整える。 */
+export function forBrowser(response: Response, status: 'HIT' | 'MISS'): Response {
+  const res = new Response(response.body, response)
+  res.headers.set('cache-control', BROWSER_CACHE_CONTROL)
+  res.headers.set('x-edge-cache', status)
+  return res
+}
+
 /** RSC の応答はこれらの値で中身が変わる。キーに含める。 */
 const RSC_HEADERS = ['rsc', 'next-router-state-tree', 'next-router-prefetch', 'next-router-segment-prefetch', 'next-url']
 
@@ -66,11 +83,7 @@ const worker = {
     const cache = (caches as unknown as { default: Cache }).default
     const key = cacheKey(request, env.CF_VERSION_METADATA?.id ?? 'dev')
     const hit = await cache.match(key)
-    if (hit) {
-      const res = new Response(hit.body, hit)
-      res.headers.set('x-edge-cache', 'HIT')
-      return res
-    }
+    if (hit) return forBrowser(hit, 'HIT')
 
     const response: Response = await handler.fetch(request, env, ctx)
     if (!isStorable(response)) return response
@@ -79,9 +92,7 @@ const worker = {
     stored.headers.set('cache-control', `public, s-maxage=${EDGE_TTL}`)
     ctx.waitUntil(cache.put(key, stored))
 
-    const res = new Response(response.body, response)
-    res.headers.set('x-edge-cache', 'MISS')
-    return res
+    return forBrowser(response, 'MISS')
   },
 }
 
