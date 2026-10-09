@@ -2,3 +2,8 @@
 @import '../../../web/src/app/[locale]/globals.css';
 /* このアプリの .astro / .tsx / .ts で使うクラスも拾う */
 @source "../";
+/* Next 側から流用している部品 (ビューア・共有ボタンなど) のクラスも拾う。
+   Tailwind はビルドしたフォルダ (apps/item) の中しか自動では見ないので、ここで足さないと
+   ビューアの前へ次へのボタンの大きさ・位置などが CSS に入らず、表示が崩れる */
+@source "../../../web/src/components/pages/item/";
+@source "../../../web/src/components/ui/";
