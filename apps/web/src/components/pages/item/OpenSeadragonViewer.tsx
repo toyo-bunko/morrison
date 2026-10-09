@@ -105,8 +105,10 @@ const OpenSeadragonViewer = forwardRef<ViewerApi, ViewerProps>(function OpenSead
       const rect = v.viewport.imageToViewportRectangle(src.x, src.y, src.w, src.h)
       // Inflate the OSD Rect in place so it keeps its prototype methods
       // (`getCenter`, etc. — `_fitBounds` relies on them).
-      const padX = rect.width * 3
+      // 余白は行の高さを基準にする。以前は幅の 3 倍を左右に足していたので、
+      // 横に長い本文の行ではページより広い範囲になり、寄らずに縮小していた。
       const padY = rect.height * 3
+      const padX = Math.max(rect.width * 0.1, padY)
       rect.x -= padX
       rect.y -= padY
       rect.width += padX * 2
