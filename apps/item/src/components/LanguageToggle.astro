@@ -1,0 +1,21 @@
+---
+// もう一方の言語の同じページへのリンク (Next 版 toggle-language.tsx)
+import { getMessages } from '../lib/i18n'
+import { otherLocale, type Locale } from '../lib/paths'
+
+interface Props {
+  locale: Locale
+  /** 言語を切り替えたときの行き先 (もう一方の言語での、このページのパス) */
+  href: string
+  variant?: 'header' | 'mobile'
+}
+const { locale, href, variant = 'header' } = Astro.props
+const other = otherLocale(locale)
+const label = getMessages(locale).Header[other]
+const colorClass = variant === 'header'
+    ? 'text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white'
+    : 'text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white'
+---
+<div class="flex items-center space-x-2 sm:space-x-4 min-w-0">
+  <a hreflang={other} class={`text-sm font-medium ${colorClass} cursor-pointer transition-colors`} href={href}>{label}</a>
+</div>

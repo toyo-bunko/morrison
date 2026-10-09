@@ -1,0 +1,12 @@
+---
+// 資料ページ (ja)。描画は components/ItemPage.astro、データは lib/load.ts。
+import ItemPage from '../../components/ItemPage.astro'
+import { loadItem } from '../../lib/load'
+
+const { id = '' } = Astro.params
+const result = await loadItem('ja', id)
+if ('redirect' in result) return Astro.redirect(result.redirect, 301)
+// 無い資料は本物の 404 を返す (200 で「見つかりません」を出すと、検索エンジンが「ある」と見なす)
+if ('notFound' in result) Astro.response.status = 404
+---
+<ItemPage locale="ja" id={id} data={'data' in result ? result.data : null} />

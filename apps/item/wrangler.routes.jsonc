@@ -1,0 +1,23 @@
+// 資料ページの Worker に付ける route だけを書いたファイル。配布 (wrangler deploy) では使わない。
+//
+// 付け方 (apps/item で。手元の wrangler login の権限で付く):
+//   npm run routes
+// 中身は `wrangler triggers deploy`。この Worker の route を、ここに書いた 2 本で置き換える (コードは上げない)。
+//
+// どう割り当てるか:
+//   Cloudflare では、route に書いた Worker が、独自ドメイン (custom_domain) に付いた Worker より先に動く。
+//   なので Next 側の DNS・設定は触らない。下の 2 つの route に合う要求だけがここに来て、ほかは今までどおり Next に届く。
+//     /item/*      資料ページ (日本語) と、このアプリの CSS・JS (/item/_astro/*)
+//     /en/item/*   資料ページ (英語)
+//   /api/* (JSON:API・IIIF・DTS) は Next のまま。資料ページのビューアが読む /api/iiif/... も Next が返す。
+//   戻すとき: route を消す (Cloudflare の管理画面の Worker → Settings → Domains & Routes で外す)。
+//   資料ページは Next 側に残してあるので、そのまま Next が返す。
+{
+  "name": "morrison-item",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "morrison.toyobunko-lab.jp/item/*", "zone_name": "toyobunko-lab.jp" },
+    { "pattern": "morrison.toyobunko-lab.jp/en/item/*", "zone_name": "toyobunko-lab.jp" }
+  ]
+}

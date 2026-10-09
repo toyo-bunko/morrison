@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+# ローカルの検索サーバの接続先 (モックの URL だけを書く)
+.dev.vars
+# 偽の ES が返す資料と、比べるための Next 版の HTML (scripts/fetch_fixture.py が作る)
+scripts/fixtures/

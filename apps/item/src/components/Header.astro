@@ -1,0 +1,68 @@
+---
+// Next 版 components/layout/Header.tsx と同じ出力。メニューの開閉は scripts/layout.ts (data-menu-*)。
+import Icon from './Icon.astro'
+import ThemeToggle from './ThemeToggle.astro'
+import LanguageToggle from './LanguageToggle.astro'
+import { getConfig, getMessages } from '../lib/i18n'
+import { withLocale, type Locale } from '../lib/paths'
+
+interface Props {
+  locale: Locale
+  /** 言語の切り替えの行き先 */
+  switchHref: string
+}
+const { locale, switchHref } = Astro.props
+const t = getMessages(locale).Header
+const config = getConfig(locale)
+const links = [
+  { href: '/search', icon: 'search', label: t.search },
+  { href: '/fulltext-search', icon: 'document', label: t.fulltextSearch },
+  { href: '/visualize', icon: 'chart', label: t.visualize },
+  { href: '/about', icon: 'info', label: t.about },
+] as const
+---
+<header class="sticky top-0 z-50 w-full backdrop-blur-lg bg-surface-raised/90 border-b border-brand shadow-sm">
+  <nav class="mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex items-center justify-between">
+      <a class="flex items-center space-x-3 hover:opacity-80 transition-opacity" href={withLocale(locale, '/')}>
+        <span class="text-xl sm:text-2xl font-bold font-serif text-brand">{config.siteName}</span>
+      </a>
+
+      <div class="hidden md:flex items-center space-x-8">
+        {links.map((l) => (
+          <a class="flex items-center space-x-1 text-ink-muted hover:text-brand transition-colors" href={withLocale(locale, l.href)}>
+            <Icon name={l.icon} class="w-5 h-5" />
+            <span>{l.label}</span>
+          </a>
+        ))}
+        <div class="flex items-center space-x-4">
+          <ThemeToggle />
+          <LanguageToggle locale={locale} href={switchHref} />
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4 md:hidden">
+        <button data-menu-toggle class="p-2 rounded-lg text-ink hover:bg-brand-soft transition-colors">
+          <span class="sr-only">{t.openMenu}</span>
+          <span data-menu-icon="open"><Icon name="menu" class="w-6 h-6" /></span>
+          <span data-menu-icon="close" class="hidden"><Icon name="x" class="w-6 h-6" /></span>
+        </button>
+      </div>
+    </div>
+
+    <div data-menu class="hidden md:hidden mt-4 rounded-lg bg-surface-raised border border-line shadow-lg">
+      <div class="px-2 pt-2 pb-3 space-y-1">
+        {links.map((l) => (
+          <a class="flex items-center space-x-2 px-3 py-2 rounded-md text-ink hover:bg-brand-soft" href={withLocale(locale, l.href)}>
+            <Icon name={l.icon} class="w-5 h-5" />
+            <span>{l.label}</span>
+          </a>
+        ))}
+        <div class="flex items-center justify-end space-x-2 px-3 py-2">
+          <ThemeToggle variant="mobile" />
+          <LanguageToggle locale={locale} href={switchHref} variant="mobile" />
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>

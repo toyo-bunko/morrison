@@ -1,0 +1,196 @@
+---
+// 資料ページ本体 (日英共通)。Next 版 app/[locale]/item/[id]/page.tsx と同じ HTML・文言。
+// 言語ごとのページ (pages/item/[id].astro、pages/en/item/[id].astro) は、lib/load.ts で引いたデータを渡すだけ。
+import Base from '../layouts/Base.astro'
+import Viewer, { OCR_PAGES_ELEMENT_ID } from './Viewer.tsx'
+import ItemShareExport from '@/components/pages/item/ItemShareExport'
+import { buildHeadTags } from '../lib/head'
+import { getConfig, getMessages } from '../lib/i18n'
+import { searchHref, withLocale, type Locale } from '../lib/paths'
+import type { ItemData } from '../lib/load'
+import { origin } from '@/libs/metadata'
+import { itemDescription, itemJsonLd, itemOgImageUrl, jsonLdString } from '@/libs/item-seo'
+import { itemUrl } from '@/libs/canonical-url'
+import { itemHasFulltext } from '@/libs/fulltext'
+
+interface Props {
+  locale: Locale
+  id: string
+  /** 資料のデータ。無いとき (404) は null */
+  data: ItemData | null
+}
+const { locale, id, data } = Astro.props
+
+const messages = getMessages(locale)
+const t = messages.ItemPage
+const config = getConfig(locale)
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || ''
+
+// 資料が無いときは Next 版の not-found.tsx と同じ文言を出す
+const item = data?.item
+const title = item ? item.title || id : '404'
+const head = item
+  ? await buildHeadTags(locale, {
+      path: `/item/${id}`,
+      // 資料名は長いものが多い (200 字を超えるものもある)。タブと検索結果で切れるので詰める
+      title: title.length > 80 ? `${title.slice(0, 79).trimEnd()}…` : title,
+      description: itemDescription(item, locale),
+      image: item.has_image ? { url: itemOgImageUrl(item.callNumber || id), alt: title } : undefined,
+      type: 'article',
+    })
+  : await buildHeadTags(locale, { path: `/item/${id}`, noindex: true })
+
+const hasImages = !!item?.has_image
+const ocrPages = data?.ocrPages ?? []
+const hasFulltext = item ? itemHasFulltext(item, ocrPages) : false
+const manifestUrl = `${siteUrl}/api/iiif/3/${id}/manifest`
+const pageUrl = itemUrl(siteUrl, locale, id)
+
+const dateFormatter = new Intl.DateTimeFormat(locale === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+const today = dateFormatter.format(new Date())
+const lastUpdatedText = data?.lastUpdatedMs ? dateFormatter.format(new Date(data.lastUpdatedMs)) : null
+
+const citation = item
+  ? [
+      item.heading1,
+      item.title ? `"${item.title}"` : null,
+      item.publication,
+      item.publisher,
+      item.callNumber ? `${t.callNumber}: ${item.callNumber}` : null,
+      config.siteName,
+      `${pageUrl} (${t.accessed} ${today})`,
+    ]
+      .filter(Boolean)
+      .join('. ') + '.'
+  : ''
+
+const jsonLd = item
+  ? jsonLdString(
+      itemJsonLd(item, {
+        url: pageUrl,
+        siteName: config.siteName,
+        siteUrl: origin,
+        description: itemDescription(item, locale),
+        image: hasImages ? itemOgImageUrl(item.callNumber || id) : undefined,
+      }),
+    )
+  : ''
+
+// 書誌の欄。値の無い欄は出さない (Next 版の MetaField と同じ)。wide は 2 列の表で横いっぱいに使う欄
+const isUrl = (v?: string | null) => !!v && v.startsWith('http')
+const fields: { label: string; value?: string | null; wide?: boolean; valueClass?: string; link?: boolean }[] = item
+  ? [
+      { label: t.title, value: item.title, wide: true, valueClass: 'font-semibold' },
+      { label: t.titleStatement, value: item.titleStatement, wide: true },
+      { label: t.author, value: item.heading1 },
+      { label: t.description, value: item.description, wide: true },
+      { label: t.abstractEn, value: item.abstract_en, wide: true },
+      { label: t.abstractJa, value: item.abstract_ja, wide: true },
+      { label: t.language, value: item.language?.length ? item.language.map((l) => l.toUpperCase()).join(', ') : null },
+      { label: t.publication, value: item.publication },
+      { label: t.publisher, value: item.publisher },
+      { label: t.date, value: item.date },
+      { label: t.publicationYear, value: item.publication_year != null ? String(item.publication_year) : null },
+      { label: t.format, value: item.format },
+      { label: t.callNumber, value: item.callNumber },
+      { label: t.classification, value: item.tag1 },
+      { label: t.subClassification, value: item.tag2 || item.tag3 ? [item.tag2, item.tag3].filter(Boolean).join(' > ') : null },
+      { label: t.holding, value: item.holding },
+      { label: t.isPartOf, value: item.isPartOf, wide: true, link: isUrl(item.isPartOf) },
+      { label: t.references, value: item.references, wide: true, link: isUrl(item.references) },
+    ].filter((f) => f.value != null && f.value !== '')
+  : []
+
+const shareLabels = {
+  heading: t.shareExportHeading,
+  exportGroup: t.exportGroup,
+  shareGroup: t.shareGroup,
+  citationGroup: t.citationGroup,
+  jsonApiExport: t.jsonApiExport,
+  teiExport: t.teiExport,
+  iiifManifest: t.iiifManifest,
+  copyLink: t.copyLink,
+  copyCitation: t.copyCitation,
+  copied: t.copied,
+  shareOnX: t.shareOnX,
+  shareOnFacebook: t.shareOnFacebook,
+  shareOnLine: t.shareOnLine,
+}
+---
+<Base locale={locale} head={head} switchPath={`/item/${id}`}>
+  {jsonLd && <script slot="jsonld" type="application/ld+json" set:html={jsonLd} />}
+  {
+    !item ? (
+      <div class="py-12 text-center">
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink mb-4 tracking-tight">404</h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">{messages.Common.notFound}</p>
+        <a href={withLocale(locale, '/')} class="mt-6 inline-block text-brand hover:underline">{messages.Common.backHome}</a>
+      </div>
+    ) : (
+      <>
+        {hasImages && (
+          <>
+            {/* 全ページの OCR 本文。ビューアの島がここから読む (components/Viewer.tsx) */}
+            <script type="application/json" id={OCR_PAGES_ELEMENT_ID} set:html={jsonLdString(ocrPages)} />
+            <Viewer client:only="react" itemId={id} messages={messages.Viewer}>
+              <div slot="fallback" class="rounded-lg overflow-hidden">
+                <div class="mb-6 h-[calc(100vh-12rem)] min-h-[420px] rounded-lg border border-gray-200 dark:border-gray-700" />
+              </div>
+            </Viewer>
+          </>
+        )}
+        <div>
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+            <div class="lg:col-span-2 bg-surface-raised rounded-lg shadow-sm border border-line overflow-hidden">
+              <div class="px-6 py-4 bg-surface-sunken border-b border-brand">
+                <h2 class="text-lg font-bold text-ink">{t.bibliographicInfo}</h2>
+              </div>
+              <dl>
+                {fields.map((f) => (
+                  <div class={`px-6 py-4 border-b border-gray-100 dark:border-gray-700/60 last:border-b-0 sm:grid sm:grid-cols-[7rem_1fr] sm:gap-4 ${f.wide ? 'lg:col-span-2' : ''}`}>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{f.label}</dt>
+                    <dd class={`mt-1 sm:mt-0 break-words text-sm text-gray-900 dark:text-gray-100 ${f.valueClass ?? ''}`}>
+                      {f.link ? (
+                        <a href={f.value} target="_blank" rel="noopener noreferrer" class="text-brand hover:text-brand-strong underline">{f.value}</a>
+                      ) : (
+                        f.value
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+            <div class="lg:col-span-1">
+              <ItemShareExport
+                client:load
+                itemId={id}
+                title={title}
+                pageUrl={pageUrl}
+                manifestUrl={manifestUrl}
+                hasImages={hasImages}
+                hasFulltext={hasFulltext}
+                citation={citation}
+                labels={shareLabels}
+              />
+            </div>
+          </div>
+
+          {lastUpdatedText && (
+            <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+              {t.lastUpdated}: {lastUpdatedText}
+            </div>
+          )}
+
+          <div class="mt-6 text-center">
+            <a href={withLocale(locale, searchHref(Astro.url.searchParams))} class="inline-flex items-center text-sm text-brand hover:text-brand-strong">
+              <svg class="mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              {t.backToSearch}
+            </a>
+          </div>
+        </div>
+      </>
+    )
+  }
+</Base>

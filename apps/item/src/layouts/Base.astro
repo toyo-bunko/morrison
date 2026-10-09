@@ -1,0 +1,94 @@
+---
+// Next 版の [locale]/layout.tsx (フォント・明暗・ページ上部へ戻る) と components/layout/Common.tsx にあたる外枠。
+// 資料ページは Common を isFullWidth・hideHeading で使っているので、パンくずと大見出しは無い。
+import '../styles/global.css'
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import type { HeadTags } from '../lib/head'
+import { getMessages } from '../lib/i18n'
+import { withLocale, otherLocale, type Locale } from '../lib/paths'
+
+interface Props {
+  locale: Locale
+  head: HeadTags
+  /** 言語の切り替えの行き先。言語の接頭辞なしのパスを渡す */
+  switchPath: string
+}
+const { locale, head, switchPath } = Astro.props
+const gaId = process.env.NEXT_PUBLIC_GA_ID || ''
+const t = getMessages(locale).BackToTop
+const switchHref = withLocale(otherLocale(locale), switchPath)
+
+// next/font と同じ変数名 (globals.css の --font-sans などがこれを参照する)
+const fonts =
+  'https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDPMincho:wght@400;700&family=EB+Garamond:wght@400;500;600;700&display=swap'
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f0ed" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1c1a18" media="(prefers-color-scheme: dark)" />
+    <title>{head.title}</title>
+    <meta name="description" content={head.description} />
+    {head.noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="canonical" href={head.canonical} />
+    {head.languages.map(([lang, href]) => <link rel="alternate" hreflang={lang} href={href} />)}
+    {head.og.map(([property, content]) => <meta property={property} content={content} />)}
+    {head.twitter.map(([name, content]) => <meta name={name} content={content} />)}
+    <link rel="icon" href="/favicon.ico" sizes="48x48" type="image/x-icon" />
+    <link rel="icon" href="/icon.png" sizes="180x180" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-icon.png" sizes="180x180" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href={fonts} />
+    <style is:global>
+      :root {
+        --font-biz-gothic: 'BIZ UDPGothic';
+        --font-biz-mincho: 'BIZ UDPMincho';
+        --font-eb-garamond: 'EB Garamond';
+      }
+    </style>
+    <!-- 描画前に明暗を決める (next-themes と同じ。ちらつきを防ぐ) -->
+    <script is:inline>
+      (function () {
+        try {
+          var d = document.documentElement
+          var t = localStorage.getItem('theme')
+          var r = t === 'light' || t === 'dark' ? t : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          d.classList.remove('light', 'dark')
+          d.classList.add(r)
+          d.style.colorScheme = r
+        } catch (e) {}
+      })()
+    </script>
+    {gaId && <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} is:inline></script>}
+    {gaId && <script is:inline set:html={`window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', '${gaId}');`} />}
+  </head>
+  <body class="font-sans">
+    <div>
+      <slot name="jsonld" />
+      <div class="min-h-screen flex flex-col bg-surface">
+        <Header locale={locale} switchHref={switchHref} />
+        <main class="flex-1">
+          <div class="mx-auto container-fluid px-4 sm:px-6 lg:px-12 xl:px-16 2xl:px-20 pt-4 pb-8 sm:pb-12">
+            <slot />
+          </div>
+        </main>
+        <Footer locale={locale} />
+      </div>
+    </div>
+    <button
+      data-back-to-top
+      class="hidden fixed bottom-6 right-6 p-3 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-white rounded-full shadow-lg transition-all duration-300 z-50"
+      aria-label={t.backToPageTop}
+      title={t.backToTop}
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+    </button>
+    <script>
+      import '../scripts/layout'
+    </script>
+  </body>
+</html>

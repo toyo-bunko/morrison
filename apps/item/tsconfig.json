@@ -1,0 +1,19 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "src/**/*", "__tests__/**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    // apps/web/src のファイル (import { Metadata } from 'next' など) も型検査に入るため、
+    // Next 側の書き方 (型を type なしで import) を許す
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "@/*": ["../web/src/*"],
+      "next/navigation": ["./src/shims/next-navigation.ts"],
+      "next-intl": ["./src/shims/next-intl.tsx"]
+    }
+  }
+}
