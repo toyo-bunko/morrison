@@ -48,3 +48,32 @@ jobs:
           BASIC_AUTH_USER: ${{ secrets.BASIC_AUTH_USER }}
           BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
         run: node apps/web/scripts/test-pages.js
+
+  # 資料ページだけを返す Astro の Worker (apps/item、名前 morrison-item)。Next の Worker の手前に route で置く
+  # (route は配布では付けない。apps/item/README.md)。Next の配布が落ちても、こちらは独立して配る。
+  # 鍵 (ES_URL・CF_ACCESS_CLIENT_ID・CF_ACCESS_CLIENT_SECRET) は Worker のシークレットに先に入れておく。
+  item:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Build item (Astro)
+        working-directory: apps/item
+        env:
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_GA_ID: ${{ vars.NEXT_PUBLIC_GA_ID }}
+        run: npm run build
+
+      - name: Deploy item to Cloudflare Workers
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/item
+          command: deploy

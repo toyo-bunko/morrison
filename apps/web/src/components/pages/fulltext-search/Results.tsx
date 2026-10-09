@@ -2,9 +2,9 @@
 
 import { withSearch } from '@elastic/react-search-ui'
 import type { SearchResult } from '@elastic/search-ui'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useState } from 'react'
-import { Link } from '@/i18n/routing'
+import { localeSegment } from '@/libs/canonical-url'
 
 export type ViewMode = 'list' | 'grid'
 
@@ -22,6 +22,7 @@ function getRawValue(result: SearchResult, field: string): string {
 
 function ResultItem({ result, searchTerm, viewMode }: { result: SearchResult; searchTerm: string; viewMode: ViewMode }) {
   const t = useTranslations('FulltextSearchPage')
+  const locale = useLocale()
 
   const callNumber = getRawValue(result, 'item_id') // callNumber as item ID
   const page = getRawValue(result, 'page')
@@ -41,13 +42,15 @@ function ResultItem({ result, searchTerm, viewMode }: { result: SearchResult; se
   const thumbnailUrl =
     primaryThumb && primaryThumb === failedSrc ? itemThumbnailUrl : primaryThumb
 
+  // 資料ページは Astro の別 Worker (apps/item) が返す。Next の Link だと画面の切り替え用の形式 (RSC) を
+  // 取りに行くので、資料へのリンクは普通の <a> にして全体を読み込み直す (先読みもしない)。
   // Detail page URL: open the item viewer at the matched page (docpage) and
   // carry the search term (q) so it is highlighted in-image on arrival.
   const detailParams = new URLSearchParams()
   if (searchTerm) detailParams.set('q', searchTerm)
   if (page) detailParams.set('docpage', page)
   const detailQs = detailParams.toString()
-  const detailUrl = `/item/${callNumber}${detailQs ? `?${detailQs}` : ''}`
+  const detailUrl = `${localeSegment(locale)}/item/${callNumber}${detailQs ? `?${detailQs}` : ''}`
   // Some OCR hits have no bibliographic match (orphan pages not in morrison_bib),
   // so callNumber is empty. Those have no detail page — never link to `/item/`
   // (which collapses to `/item` and 404s); render them non-clickable instead.
@@ -112,9 +115,9 @@ function ResultItem({ result, searchTerm, viewMode }: { result: SearchResult; se
       </>
     )
     return hasDetail ? (
-      <Link href={detailUrl} className={cardClass}>
+      <a href={detailUrl} className={cardClass}>
         {cardBody}
-      </Link>
+      </a>
     ) : (
       <div className={cardClass}>{cardBody}</div>
     )
@@ -149,12 +152,12 @@ function ResultItem({ result, searchTerm, viewMode }: { result: SearchResult; se
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <div className="flex flex-wrap items-center gap-2">
               {callNumber && (
-                <Link
+                <a
                   href={detailUrl}
                   className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-200 text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100 hover:bg-neutral-300 dark:hover:bg-neutral-600"
                 >
                   {callNumber}
-                </Link>
+                </a>
               )}
               {page && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
@@ -168,7 +171,7 @@ function ResultItem({ result, searchTerm, viewMode }: { result: SearchResult; se
               )}
             </div>
             {hasImage && hasDetail && (
-              <Link
+              <a
                 href={detailUrl}
                 className="inline-flex items-center text-sm font-medium text-gray-900 hover:text-black dark:text-gray-200 dark:hover:text-white"
               >
@@ -176,7 +179,7 @@ function ResultItem({ result, searchTerm, viewMode }: { result: SearchResult; se
                 <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </Link>
+              </a>
             )}
           </div>
 
@@ -184,9 +187,9 @@ function ResultItem({ result, searchTerm, viewMode }: { result: SearchResult; se
           {itemTitle && (
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
               {hasDetail ? (
-                <Link href={detailUrl} className="hover:text-black dark:hover:text-white">
+                <a href={detailUrl} className="hover:text-black dark:hover:text-white">
                   {itemTitle}
-                </Link>
+                </a>
               ) : (
                 <span>{itemTitle}</span>
               )}

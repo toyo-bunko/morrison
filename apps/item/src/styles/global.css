@@ -1,0 +1,4 @@
+/* Next と同じ Tailwind の設定・色・フォントの変数をそのまま使う (二重管理にしない) */
+@import '../../../web/src/app/[locale]/globals.css';
+/* このアプリの .astro / .tsx / .ts で使うクラスも拾う */
+@source "../";

@@ -1,0 +1,29 @@
+// 資料ページだけを返す Astro の Worker (apps/item)。Next の Worker (apps/web、名前 morrison) の手前に route で置く。
+//
+// route はこのファイルに書かない。wrangler.routes.jsonc に分け、手元から一度だけ付ける (README の「route を付ける」)。
+//   ここに route を書くと、配布 (wrangler deploy) のたびに route を付け直そうとし、
+//   GitHub Actions の配布用トークンに Zone | Workers Routes の権限が要る。
+//   route は滅多に変わらないので、配布用トークンは Workers の配布だけに絞っておく。
+//   route が無いとき、wrangler deploy は route を確かめも消しもしない (wrangler 4.146 の作りで確認済み。kanseki で実証)。
+//
+// 配る前に、Worker のシークレットを入れる (Worker ができるのは初回の deploy のとき。順番は README を参照):
+//   npx wrangler secret put ES_URL
+//   npx wrangler secret put CF_ACCESS_CLIENT_ID
+//   npx wrangler secret put CF_ACCESS_CLIENT_SECRET
+// Next の Worker と同じ値でよい。索引名などはビルド時に埋め込む (package.json の build)。
+//
+// workers.dev とプレビュー URL は切る (開いていると、route を通らない別の入口ができてしまう)。
+{
+  "name": "morrison-item",
+  "workers_dev": false,
+  "preview_urls": false,
+  "compatibility_date": "2026-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // 版の ID。src/middleware.ts がキャッシュの鍵に入れ、配るたびに入れ替わるようにする
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

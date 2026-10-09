@@ -29,3 +29,14 @@ jobs:
         env:
           NEXT_PUBLIC_INDEX_NAME: morrison_bib
           ALLOWED_INDICES: morrison_bib
+
+      # 資料ページを返す Astro のアプリ (apps/item)。deploy.yml の item ジョブと同じ手順でビルドまで確かめる
+      - name: Typecheck item (Astro)
+        working-directory: apps/item
+        run: npm run typecheck
+      - name: Unit tests item (vitest)
+        working-directory: apps/item
+        run: npm test
+      - name: Build item (Astro)
+        working-directory: apps/item
+        run: npm run build

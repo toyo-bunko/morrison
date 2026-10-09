@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { ApiProxyConnector } from '@elastic/search-ui-elasticsearch-connector'
 import { WithSearch } from '@elastic/react-search-ui'
 import type { SearchContextState } from '@elastic/search-ui'
-import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/routing'
+import { useTranslations, useLocale } from 'next-intl'
+import { localeSegment } from '@/libs/canonical-url'
 
 import { SearchUI, SearchBox } from '@toyo/shared-ui'
 import type { FacetOption, SearchUITranslations } from '@toyo/shared-ui'
@@ -139,6 +139,7 @@ function CustomPagingInfo({ viewMode, onViewModeChange }: { viewMode: ViewMode; 
 
 function Results({ viewMode }: { viewMode: ViewMode }) {
   const t = useTranslations('Search')
+  const locale = useLocale()
 
   return (
     <WithSearch
@@ -191,9 +192,9 @@ function Results({ viewMode }: { viewMode: ViewMode }) {
                 const queryString = searchParams.toString()
 
                 return (
-                  <Link
+                  <a
                     key={id}
-                    href={`/item/${id}${queryString ? `?${queryString}` : ''}`}
+                    href={`${localeSegment(locale)}/item/${id}${queryString ? `?${queryString}` : ''}`}
                     className="block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors overflow-hidden"
                   >
                     {/* Thumbnail: 余白付きで全体表示（判型がバラバラなのでトリミングしない） */}
@@ -226,7 +227,7 @@ function Results({ viewMode }: { viewMode: ViewMode }) {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </a>
                 )
               })}
             </div>
@@ -278,9 +279,11 @@ function Results({ viewMode }: { viewMode: ViewMode }) {
               const queryString = searchParams.toString()
 
               return (
-                <Link
+                // 資料ページは Astro の別 Worker (apps/item) が返す。Next の Link だと画面の切り替え用の
+                // 形式 (RSC) を取りに行くので、普通のリンクにして全体を読み込み直す (先読みもしない)
+                <a
                   key={id}
-                  href={`/item/${id}${queryString ? `?${queryString}` : ''}`}
+                  href={`${localeSegment(locale)}/item/${id}${queryString ? `?${queryString}` : ''}`}
                   className="block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors overflow-hidden"
                 >
                   <div className="flex">
@@ -349,7 +352,7 @@ function Results({ viewMode }: { viewMode: ViewMode }) {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </a>
               )
             })}
           </div>

@@ -1,0 +1,72 @@
+---
+// Next 版 components/layout/Footer.tsx と同じ出力
+import Icon from './Icon.astro'
+import { getConfig } from '../lib/i18n'
+import { withLocale, type Locale } from '../lib/paths'
+
+interface Props {
+  locale: Locale
+}
+const { locale } = Astro.props
+const config = getConfig(locale)
+const en = locale === 'en'
+const labels = {
+  about: en ? 'About' : 'このデータベースについて',
+  aboutLink: en ? 'About This Database' : 'このデータベースについて',
+  news: en ? 'News' : 'お知らせ',
+  search: en ? 'Search' : '検索',
+  searchLink: en ? 'Search' : '検索',
+  fulltextSearch: en ? 'Fulltext Search' : '全文検索',
+  apiDocs: en ? 'API Documentation' : 'API ドキュメント',
+  relatedLinks: en ? 'Related Links' : '関連リンク',
+  copyright: en ? 'Toyo Bunko' : '東洋文庫',
+}
+const linkClass = 'text-sm text-ink-muted hover:text-brand transition-colors'
+const headClass = 'font-serif text-base text-brand border-b border-brand pb-2'
+---
+<footer class="bg-surface text-ink border-t border-brand">
+  <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1fr] gap-8 mb-8">
+      <div class="space-y-4">
+        <h3 class="font-serif text-base text-balance text-brand border-b border-brand pb-2">{config.siteName}</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">{config.siteDescription}</p>
+      </div>
+      <div class="space-y-4">
+        <h3 class={headClass}>{labels.about}</h3>
+        <ul class="space-y-2">
+          <li><a class={linkClass} href={withLocale(locale, '/about')}>{labels.aboutLink}</a></li>
+          <li><a class={linkClass} href={withLocale(locale, '/news')}>{labels.news}</a></li>
+          <li><a class={linkClass} href={withLocale(locale, '/api-docs')}>{labels.apiDocs}</a></li>
+        </ul>
+      </div>
+      <div class="space-y-4">
+        <h3 class={headClass}>{labels.search}</h3>
+        <ul class="space-y-2">
+          <li><a class={linkClass} href={withLocale(locale, '/search')}>{labels.searchLink}</a></li>
+          <li><a class={linkClass} href={withLocale(locale, '/fulltext-search')}>{labels.fulltextSearch}</a></li>
+        </ul>
+      </div>
+      <div class="space-y-4">
+        <h3 class={headClass}>{labels.relatedLinks}</h3>
+        <ul class="space-y-2">
+          {config.links.map((link) => (
+            <li>
+              <a href={link.url} target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm text-ink-muted hover:text-brand transition-colors">
+                {en ? link.title_en : link.title}
+                <Icon name="external" class="ml-1 w-3 h-3" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="bg-brand">
+    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+      <p class="text-sm text-center text-white">
+        &copy; {new Date().getFullYear()}{' '}
+        <a href="http://www.toyo-bunko.or.jp/" target="_blank" rel="noopener noreferrer" class="underline hover:no-underline">{labels.copyright}</a>
+      </p>
+    </div>
+  </div>
+</footer>

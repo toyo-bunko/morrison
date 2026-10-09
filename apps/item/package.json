@@ -1,0 +1,33 @@
+{
+  "name": "@morrison/item",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 3107",
+    "build": "NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://morrison.toyobunko-lab.jp} NEXT_PUBLIC_INDEX_NAME=${NEXT_PUBLIC_INDEX_NAME:-morrison_bib} FULLTEXT_INDEX_NAME=${FULLTEXT_INDEX_NAME:-morrison_page} astro build",
+    "routes": "wrangler triggers deploy -c wrangler.routes.jsonc",
+    "typecheck": "astro check",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "14.3.3",
+    "@astrojs/react": "7.0.0",
+    "@tailwindcss/typography": "0.5.20",
+    "@tailwindcss/vite": "4.3.3",
+    "astro": "7.3.5",
+    "openseadragon": "6.0.2",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-icons": "5.6.0",
+    "tailwindcss": "4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "typescript": "5.8.3",
+    "vitest": "4.1.11",
+    "wrangler": "4.146.0"
+  }
+}
